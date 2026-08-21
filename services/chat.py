@@ -21,6 +21,8 @@ import utils.request
 
 logger = logging.getLogger(__name__)
 
+PRICE_RATE = 100000.0
+
 
 class RoomKeyType(enum.IntEnum):
     ROOM_ID = 1
@@ -595,8 +597,8 @@ class LiveMsgHandler(blivedm.BaseHandler):
             'avatarUrl': avatar_url,
             'timestamp': message.timestamp,
             'authorName': message.uname,
-            'totalCoin': 0 if not is_paid_gift else message.total_coin,
-            'totalFreeCoin': 0 if is_paid_gift else message.total_coin,
+            'totalCoin': 0 if not is_paid_gift else message.total_coin*PRICE_RATE,
+            'totalFreeCoin': 0 if is_paid_gift else message.total_coin*PRICE_RATE,
             'giftName': message.gift_name,
             'num': message.num,
             # 给插件用的字段
@@ -636,7 +638,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
             # 给插件用的字段
             'num': message.num,
             'unit': message.unit,
-            'total_coin': message.price * message.num,
+            'total_coin': message.price * message.num * PRICE_RATE,
             'uid': str(message.uid) if message.uid != 0 else message.username,
             'medalLevel': 0,
             'medalName': '',
@@ -671,7 +673,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
             'avatarUrl': avatar_url,
             'timestamp': message.start_time,
             'authorName': message.uname,
-            'price': message.price,
+            'price': message.price*PRICE_RATE,
             'content': message.message,
             'translation': translation,
             # 给插件用的字段
@@ -808,7 +810,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
         if room is None:
             return
 
-        total_coin = message.r_price * message.gift_num
+        total_coin = message.r_price * message.gift_num*PRICE_RATE
         data = {
             'id': message.msg_id,
             'avatarUrl': services.avatar.process_avatar_url(message.uface),
@@ -845,7 +847,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
             # 给插件用的字段
             'num': message.guard_num,
             'unit': message.guard_unit,
-            'total_coin': message.price * message.guard_num,
+            'total_coin': total_coin,
             'uid': message.user_info.open_id,
             'medalLevel': 0 if not message.fans_medal_wearing_status else message.fans_medal_level,
             'medalName': '' if not message.fans_medal_wearing_status else message.fans_medal_name,
@@ -877,7 +879,7 @@ class LiveMsgHandler(blivedm.BaseHandler):
             'avatarUrl': services.avatar.process_avatar_url(message.uface),
             'timestamp': message.start_time,
             'authorName': message.uname,
-            'price': message.rmb,
+            'price': message.rmb*PRICE_RATE,
             'content': message.message,
             'translation': translation,
             # 给插件用的字段

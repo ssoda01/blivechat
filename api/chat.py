@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import enum
+import ipaddress
 import json
 import logging
 import random
 import time
 import uuid
 from typing import *
+from urllib.parse import urlparse
 
 import aiohttp
 import tornado.websocket
@@ -45,6 +47,27 @@ class FatalErrorType(enum.IntEnum):
     AUTH_CODE_ERROR = 1
     TOO_MANY_RETRIES = 2
     TOO_MANY_CONNECTIONS = 3
+
+
+def _is_trusted_local_origin(origin: str) -> bool:
+    """允许 localhost 与局域网地址的 WebSocket 来源。
+
+    开发时前端 dev server（如 :8080）代理到后端（:12450），Origin 与 Host 端口不同，
+    tornado 默认 check_origin 会拒绝。绑定 0.0.0.0 供局域网访问时也需要放行 LAN Origin。
+    """
+    parsed = urlparse(origin)
+    if parsed.scheme not in ('http', 'https'):
+        return False
+    hostname = parsed.hostname
+    if hostname is None:
+        return False
+    if hostname == 'localhost':
+        return True
+    try:
+        addr = ipaddress.ip_address(hostname)
+    except ValueError:
+        return False
+    return addr.is_loopback or addr.is_private
 
 
 def make_message_body(cmd, data):
@@ -231,6 +254,7 @@ class ChatHandler(tornado.websocket.WebSocketHandler):
         return (
             cfg.debug  # 开发时前端localhost直连
             or cfg.is_allowed_cors_origin(origin)
+            or _is_trusted_local_origin(origin)
             or super().check_origin(origin)  # 和Host相同
         )
 

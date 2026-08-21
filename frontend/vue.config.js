@@ -1,6 +1,7 @@
 const { defineConfig } = require('@vue/cli-service')
 
 // 不能用localhost，https://forum.dfinity.org/t/development-workflow-quickly-test-code-modifications/1793/21
+// 代理目标是本机后端；0.0.0.0 只能用于监听，不能作为连接地址
 const API_BASE_URL = 'http://127.0.0.1:12450'
 
 function toBool(val) {
@@ -12,10 +13,12 @@ function toBool(val) {
 
 module.exports = defineConfig({
   devServer: {
+    host: '0.0.0.0',
     proxy: {
       '/api': {
         target: API_BASE_URL,
-        ws: true
+        ws: true,
+        changeOrigin: true,
       },
       '/emoticons': {
         target: API_BASE_URL
